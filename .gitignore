@@ -1,0 +1,31 @@
+# .gitignore for Aletheia Finance
+
+# Sensitive data
+.env
+
+# Go binaries and dependencies
+/backend/bin/
+/backend/vendor/
+backend/core
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Python bits
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
