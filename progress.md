@@ -14,5 +14,7 @@
 ## Phase 3: Architect (In Progress)
 - [SOP 1]: Strategy Creation & Upload (Complete).
 - [SOP 2]: Credit System Integration (Complete).
-- Enforced 50 credit cost for strategy creation with atomic rollback logic.
+- [SOP 3]: Vault Integration PoC (Complete).
+- Designed non-custodial security handshake and Go models for Vaults.
+- Defined AI Agent permissioning (executeTrade vs withdraw logic).
 - Built synchronized in-memory `CreditService` for balance management.
