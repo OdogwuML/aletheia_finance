@@ -6,8 +6,9 @@
 - [/] Research Resources (ongoing)
 
 ## Phase 2: L - Link
-- [/] Verify API connections (Pending keys)
-- [/] Handshake scripts built (`tools/verify_0g.py`)
+- [x] Verify API connections (Endpoints verified in `.env`)
+- [x] Handshake scripts built (`tools/verify_0g.py`)
+- [x] 0G Storage SDK Integrated (Go Client wrapper built)
 
 ## Phase 3: A - Architect
 - [ ] Layer 1: SOPs (Go Backend & React UI flows)
