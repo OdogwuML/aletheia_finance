@@ -7,16 +7,21 @@ import (
 
 	"github.com/aletheia-finance/core/internal/models"
 	"github.com/aletheia-finance/core/internal/og"
+	"github.com/aletheia-finance/core/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type Handler struct {
-	OG *og.OGClient
+	OG     *og.OGClient
+	Credit *services.CreditService
 }
 
-func NewHandler(ogClient *og.OGClient) *Handler {
-	return &Handler{OG: ogClient}
+func NewHandler(ogClient *og.OGClient, creditService *services.CreditService) *Handler {
+	return &Handler{
+		OG:     ogClient,
+		Credit: creditService,
+	}
 }
 
 func (h *Handler) CreateStrategy(c *gin.Context) {
@@ -26,29 +31,43 @@ func (h *Handler) CreateStrategy(c *gin.Context) {
 		return
 	}
 
-	// 1. Create the Rulebook object
-	// Note: In Layer 2, we would have an AI model compile the LogicNLP.
-	// For SOP 1, we focus on the "Upload" flow with a placeholder compiled rule.
+	// 1. Credit Check & Deduction (Atomic-ish)
+	// We'll provision a sample account if one doesn't exist for test purposes
+	h.Credit.ProvisionAccount(req.OwnerAddress)
+
+	const cost = 50
+	err := h.Credit.Deduct(req.OwnerAddress, cost, "Strategy Creation: "+req.LogicNLP)
+	if err != nil {
+		c.JSON(http.StatusPaymentRequired, gin.H{
+			"error":   "Insufficient Credits",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// 2. Create the Rulebook object
 	rulebook := models.StrategyRulebook{
 		StrategyID:        uuid.New().String(),
 		OwnerAddress:      req.OwnerAddress,
 		LogicNLP:          req.LogicNLP,
 		RuleEngineVersion: "v0.1.0",
-		CompiledLogic:     "{\"rules\": \"placeholder\"}", // This will be real logic later
+		CompiledLogic:     "{\"rules\": \"placeholder\"}",
 		Status:            models.StatusActive,
 		CreatedAt:         time.Now(),
 	}
 
-	// 2. Serialize for 0G Storage
+	// 3. Serialize for 0G Storage
 	data, err := json.Marshal(rulebook)
 	if err != nil {
+		h.Credit.Refund(req.OwnerAddress, cost, "Rollback: Serialization Failure")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to serialize rulebook"})
 		return
 	}
 
-	// 3. Upload to 0G Storage
+	// 4. Upload to 0G Storage
 	txHash, err := h.OG.UploadRulebook(c.Request.Context(), data)
 	if err != nil {
+		h.Credit.Refund(req.OwnerAddress, cost, "Rollback: 0G Upload Failure")
 		c.JSON(http.StatusServiceUnavailable, gin.H{
 			"error":   "0G Storage Upload Failed",
 			"details": err.Error(),
@@ -58,11 +77,12 @@ func (h *Handler) CreateStrategy(c *gin.Context) {
 
 	rulebook.DeploymentTx = txHash
 
-	// 4. Return success with the TradeReceipt (conceptual)
+	// 5. Return success
 	c.JSON(http.StatusCreated, gin.H{
 		"message":      "Strategy secured on 0G Network",
 		"strategy_id":  rulebook.StrategyID,
 		"0g_tx_hash":   txHash,
+		"credits_paid": cost,
 		"rulebook_url": "https://storagescan-galileo.0g.ai/tx/" + txHash,
 	})
 }

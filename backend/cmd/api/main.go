@@ -7,17 +7,17 @@ import (
 
 	"github.com/aletheia-finance/core/internal/api"
 	"github.com/aletheia-finance/core/internal/og"
+	"github.com/aletheia-finance/core/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load environment variables
+	// ... (Load env as before)
 	if err := godotenv.Load("../../../.env"); err != nil {
 		log.Println("No .env file found or error loading it")
 	}
 
-	// 0G Client Initialization
 	evmRpc := os.Getenv("OG_RPC_URL")
 	indRpc := os.Getenv("OG_STORAGE_ENDPOINT")
 	privateKey := os.Getenv("AGENT_PRIVATE_KEY")
@@ -28,8 +28,11 @@ func main() {
 	}
 	defer ogClient.Close()
 
+	// Service Initialization
+	creditService := services.NewCreditService()
+
 	// Handler Initialization
-	h := api.NewHandler(ogClient)
+	h := api.NewHandler(ogClient, creditService)
 
 	r := gin.Default()
 
