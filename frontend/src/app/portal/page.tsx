@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function PortalPage() {
-    const { isAccountConnected } = useAccount(); // wait, useAccount().isConnected
     const { isConnected } = useAccount();
     const router = useRouter();
 
