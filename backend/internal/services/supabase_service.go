@@ -21,7 +21,7 @@ func NewSupabaseService() *SupabaseService {
 	}
 }
 
-func (s *SupabaseService) post(table string, body interface{}) ([]byte, error) {
+func (s *SupabaseService) Post(table string, body interface{}) ([]byte, error) {
 	jsonBody, _ := json.Marshal(body)
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/rest/v1/%s", s.URL, table), bytes.NewBuffer(jsonBody))
 	if err != nil {
@@ -48,7 +48,7 @@ func (s *SupabaseService) post(table string, body interface{}) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-func (s *SupabaseService) get(table string, walletAddress string) ([]byte, error) {
+func (s *SupabaseService) Get(table string, walletAddress string) ([]byte, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/v1/%s?wallet_address=eq.%s", s.URL, table, walletAddress), nil)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (s *SupabaseService) get(table string, walletAddress string) ([]byte, error
 	return io.ReadAll(resp.Body)
 }
 
-func (s *SupabaseService) patch(table string, walletAddress string, body interface{}) ([]byte, error) {
+func (s *SupabaseService) Patch(table string, walletAddress string, body interface{}) ([]byte, error) {
 	jsonBody, _ := json.Marshal(body)
 	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/rest/v1/%s?wallet_address=eq.%s", s.URL, table, walletAddress), bytes.NewBuffer(jsonBody))
 	if err != nil {

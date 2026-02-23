@@ -24,7 +24,7 @@ func NewCreditService(supabase *SupabaseService) *CreditService {
 // ProvisionAccount gives a new user initial credits (e.g., 500)
 func (s *CreditService) ProvisionAccount(address string) {
 	// 1. Check if user exists
-	data, err := s.supabase.get("users", address)
+	data, err := s.supabase.Get("users", address)
 	if err != nil {
 		return
 	}
@@ -34,7 +34,7 @@ func (s *CreditService) ProvisionAccount(address string) {
 
 	if len(users) == 0 {
 		// Create user
-		s.supabase.post("users", map[string]interface{}{
+		s.supabase.Post("users", map[string]interface{}{
 			"wallet_address": address,
 			"credits":        500,
 		})
@@ -42,7 +42,7 @@ func (s *CreditService) ProvisionAccount(address string) {
 }
 
 func (s *CreditService) GetBalance(address string) (int64, error) {
-	data, err := s.supabase.get("users", address)
+	data, err := s.supabase.Get("users", address)
 	if err != nil {
 		return 0, err
 	}
@@ -68,7 +68,7 @@ func (s *CreditService) Deduct(address string, amount int64, purpose string) err
 	}
 
 	newBalance := balance - amount
-	_, err = s.supabase.patch("users", address, map[string]interface{}{
+	_, err = s.supabase.Patch("users", address, map[string]interface{}{
 		"credits":    newBalance,
 		"updated_at": time.Now(),
 	})
@@ -83,7 +83,7 @@ func (s *CreditService) Refund(address string, amount int64, purpose string) err
 	}
 
 	newBalance := balance + amount
-	_, err = s.supabase.patch("users", address, map[string]interface{}{
+	_, err = s.supabase.Patch("users", address, map[string]interface{}{
 		"credits":    newBalance,
 		"updated_at": time.Now(),
 	})

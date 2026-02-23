@@ -13,7 +13,8 @@ import {
     RotateCcw,
     Loader2,
     ExternalLink,
-    CheckCircle
+    CheckCircle,
+    Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -153,6 +154,25 @@ export default function StrategyLabPage() {
                 </div>
 
                 <div className="space-y-12">
+                    {/* Watcher Intelligence (New) */}
+                    <section>
+                        <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 mb-6">
+                            <Activity className="size-3" /> Watcher Intelligence
+                        </h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[11px] font-medium text-white/40 block mb-3">Watcher Model</label>
+                                <div className="p-4 bg-white/[0.04] border border-white/20 rounded-2xl relative overflow-hidden group">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-bold text-white">OpenClaw Autonomous</span>
+                                        <div className="px-2 py-0.5 rounded-full bg-white/10 text-white/50 text-[8px] font-bold uppercase">Advanced Web</div>
+                                    </div>
+                                    <p className="text-[10px] text-white/30 leading-tight">Proactive web-scanning, sentiment analysis, and news-triggered execution.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     {/* Risk Parameters */}
                     <section>
                         <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 mb-6">
@@ -198,6 +218,30 @@ export default function StrategyLabPage() {
                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white/20">%</span>
                                 </div>
                             </div>
+                        </div>
+                    </section>
+
+                    {/* Fundamental Intelligence */}
+                    <section>
+                        <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 mb-6">
+                            <Languages className="size-3" /> Fundamental Intelligence
+                        </h3>
+                        <div className="space-y-3">
+                            {[
+                                { name: 'Social Sentiment', status: 'Active' },
+                                { name: 'Protocol TVL (Dune)', status: 'Latency: 5m' },
+                                { name: 'Wallet Whale Alerts', status: 'Real-time' },
+                            ].map((source) => (
+                                <div key={source.name} className="flex items-center justify-between p-3 bg-white/[0.02] border border-white/5 rounded-xl group hover:border-white/20 transition-all cursor-pointer">
+                                    <div>
+                                        <div className="text-xs font-semibold text-white/40 group-hover:text-white transition-colors">{source.name}</div>
+                                        <div className="text-[8px] font-bold text-white/10 uppercase tracking-tighter">{source.status}</div>
+                                    </div>
+                                    <div className="size-4 rounded border border-white/10 flex items-center justify-center">
+                                        <div className="size-2 bg-white/20 rounded-sm group-hover:bg-white transition-colors" />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </section>
 

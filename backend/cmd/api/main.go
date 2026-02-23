@@ -9,6 +9,7 @@ import (
 	"github.com/aletheia-finance/core/backend/internal/api"
 	"github.com/aletheia-finance/core/backend/internal/og"
 	"github.com/aletheia-finance/core/backend/internal/services"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -33,9 +34,11 @@ func main() {
 	supabaseService := services.NewSupabaseService()
 	creditService := services.NewCreditService(supabaseService)
 	compilerService := services.NewCompilerService()
+	watcherService := services.NewWatcherService()
+	servingService := services.NewServingService(os.Getenv("OG_SERVING_ENDPOINT"), os.Getenv("OG_SERVING_KEY"))
 
 	// Handler Initialization
-	h := api.NewHandler(ogClient, creditService, compilerService, supabaseService)
+	h := api.NewHandler(ogClient, creditService, compilerService, supabaseService, watcherService, servingService)
 
 	r := gin.Default()
 
@@ -60,6 +63,10 @@ func main() {
 		})
 
 		v1.POST("/strategies", h.CreateStrategy)
+		v1.GET("/user/stats", h.GetUserStats)
+		v1.GET("/user/strategies", h.GetUserStrategies)
+		v1.GET("/watcher/alerts", h.GetWatcherAlerts)
+		v1.POST("/watcher/execute", h.ExecuteSimulatedTrade)
 	}
 
 	port := os.Getenv("PORT")

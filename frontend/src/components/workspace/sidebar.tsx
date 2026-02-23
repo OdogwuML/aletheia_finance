@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
     LayoutDashboard,
     Beaker,
     Library,
     Settings,
-    ShieldCheck,
     Info,
-    Activity
+    Activity,
+    Coins
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAccount } from "wagmi";
+import { fetchUserStats } from "@/lib/api";
 
 const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -22,6 +25,19 @@ const navItems = [
 
 export function Sidebar() {
     const pathname = usePathname();
+    const { address, isConnected } = useAccount();
+    const [credits, setCredits] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (!isConnected || !address) {
+            setCredits(null);
+            return;
+        }
+
+        fetchUserStats(address).then((stats) => {
+            setCredits(stats.credits);
+        });
+    }, [address, isConnected]);
 
     return (
         <aside className="w-64 border-r border-white/5 bg-[#050505] flex flex-col z-20">
@@ -75,14 +91,18 @@ export function Sidebar() {
                     Settings
                 </Link>
 
-                {/* System Health Card */}
+                {/* Credits Card */}
                 <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">System Health</span>
-                        <div className="size-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">Credits</span>
+                        <Coins className="size-3 text-white/20" />
                     </div>
-                    <div className="text-xl font-semibold mb-1 tracking-tight">99.9%</div>
-                    <div className="text-[10px] text-white/30 font-medium">Optimal Performance</div>
+                    <div className="text-xl font-semibold mb-1 tracking-tight">
+                        {credits !== null ? credits : "—"}
+                    </div>
+                    <div className="text-[10px] text-white/30 font-medium">
+                        {isConnected ? "Available Balance" : "Connect Wallet"}
+                    </div>
                 </div>
 
                 {/* User Profile Hook */}
@@ -91,8 +111,12 @@ export function Sidebar() {
                         <Activity className="size-4 text-white/40" />
                     </div>
                     <div className="overflow-hidden">
-                        <div className="text-[11px] font-bold text-white truncate">Institutional User</div>
-                        <div className="text-[9px] text-white/40 uppercase tracking-tighter">Tier: Enterprise</div>
+                        <div className="text-[11px] font-bold text-white truncate">
+                            {isConnected && address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not Connected"}
+                        </div>
+                        <div className="text-[9px] text-white/40 uppercase tracking-tighter">
+                            {isConnected ? "Active Session" : "Disconnected"}
+                        </div>
                     </div>
                 </div>
             </div>

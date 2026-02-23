@@ -18,14 +18,18 @@ type Handler struct {
 	Credit   *services.CreditService
 	Compiler *services.CompilerService
 	Supabase *services.SupabaseService
+	Watcher  *services.WatcherService
+	Serving  *services.ServingService
 }
 
-func NewHandler(ogClient *og.OGClient, creditService *services.CreditService, compilerService *services.CompilerService, supabaseService *services.SupabaseService) *Handler {
+func NewHandler(ogClient *og.OGClient, creditService *services.CreditService, compilerService *services.CompilerService, supabaseService *services.SupabaseService, watcherService *services.WatcherService, servingService *services.ServingService) *Handler {
 	return &Handler{
 		OG:       ogClient,
 		Credit:   creditService,
 		Compiler: compilerService,
 		Supabase: supabaseService,
+		Watcher:  watcherService,
+		Serving:  servingService,
 	}
 }
 
@@ -94,7 +98,7 @@ func (h *Handler) CreateStrategy(c *gin.Context) {
 	rulebook.DeploymentTx = txHash
 
 	// 5. Record in Supabase
-	_, err = h.Supabase.post("strategies", map[string]interface{}{
+	_, err = h.Supabase.Post("strategies", map[string]interface{}{
 		"strategy_id":         rulebook.StrategyID,
 		"owner_address":       rulebook.OwnerAddress,
 		"logic_nlp":           rulebook.LogicNLP,
@@ -115,5 +119,104 @@ func (h *Handler) CreateStrategy(c *gin.Context) {
 		"0g_tx_hash":   txHash,
 		"credits_paid": cost,
 		"rulebook_url": "https://storagescan-galileo.0g.ai/tx/" + txHash,
+	})
+}
+
+func (h *Handler) GetUserStats(c *gin.Context) {
+	address := c.Query("address")
+	if address == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "address is required"})
+		return
+	}
+
+	balance, err := h.Credit.GetBalance(address)
+	if err != nil {
+		// If user not found, return 0 or provision? For now return 0
+		c.JSON(http.StatusOK, gin.H{
+			"credits":          0,
+			"strategies_count": 0,
+		})
+		return
+	}
+
+	data, err := h.Supabase.Get("strategies", address)
+	var count int
+	if err == nil {
+		var strats []interface{}
+		json.Unmarshal(data, &strats)
+		count = len(strats)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"credits":          balance,
+		"strategies_count": count,
+	})
+}
+
+func (h *Handler) GetUserStrategies(c *gin.Context) {
+	address := c.Query("address")
+	if address == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "address is required"})
+		return
+	}
+
+	data, err := h.Supabase.Get("strategies", address)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch strategies"})
+		return
+	}
+
+	var strats []map[string]interface{}
+	json.Unmarshal(data, &strats)
+
+	c.JSON(http.StatusOK, strats)
+}
+
+func (h *Handler) GetWatcherAlerts(c *gin.Context) {
+	alerts := h.Watcher.GetLatestAlerts()
+	c.JSON(http.StatusOK, alerts)
+}
+
+func (h *Handler) ExecuteSimulatedTrade(c *gin.Context) {
+	strategyID := c.Query("id")
+	if strategyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "strategy id is required"})
+		return
+	}
+
+	// 1. Fetch the "Rulebook" from 0G Storage (Simulated via ID here)
+	rulebookHash := "0xabc123...[0G_STORAGE_ROOT]"
+
+	// 2. Mock Market Context (from Watcher)
+	marketContext := map[string]interface{}{
+		"eth_price":  2850.50,
+		"sentiment":  0.85,
+		"volatility": "Low",
+	}
+
+	// 3. Request Verifiable Inference from 0G Serving
+	decision, err := h.Serving.RequestInference(rulebookHash, marketContext)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "0G Serving failed: " + err.Error()})
+		return
+	}
+
+	// 4. Verification Check
+	if !decision.Verified {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Inference verification failed"})
+		return
+	}
+
+	// 5. Simulate On-Chain Settlement with the Proof
+	// This hash would normally be sent to AletheiaVault.sol
+	settlementTx := uuid.New().String()
+
+	c.JSON(http.StatusOK, gin.H{
+		"strategy_id":  strategyID,
+		"decision":     decision.Decision,
+		"signature":    decision.Signature, // The PoI
+		"attestation":  decision.Attestation,
+		"vault_action": "Funds moved via PoI verification",
+		"tx_receipt":   settlementTx,
 	})
 }
