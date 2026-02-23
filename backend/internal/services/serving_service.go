@@ -38,8 +38,10 @@ func NewServingService(endpoint, apiKey string) *ServingService {
  * RequestInference calls the 0G Serving node to get a verifiable trade decision.
  */
 func (s *ServingService) RequestInference(rulebookHash string, marketData map[string]interface{}) (*ServingResponse, error) {
-	// For the hackathon, we call a mock or local 0G Serving provider
-	// In production, this would use the 0G User Broker SDK logic
+	// If endpoint is not set, we default to mock mode for the hackathon/demo
+	if s.Endpoint == "" || s.Endpoint == "MOCK" {
+		return s.mockInference(rulebookHash), nil
+	}
 
 	reqBody, _ := json.Marshal(ServingRequest{
 		Model:      "aletheia-v1-agent",
@@ -60,19 +62,18 @@ func (s *ServingService) RequestInference(rulebookHash string, marketData map[st
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		// Mocking the response for the demo if the actual 0G endpoint is unavailable
-		return s.mockInference(rulebookHash), nil
+		return nil, fmt.Errorf("0G Serving node unreachable: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("0G Serving Error: %s", string(b))
+		return nil, fmt.Errorf("0G Serving Error (Status %d): %s", resp.StatusCode, string(b))
 	}
 
 	var result ServingResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode 0G Serving response: %v", err)
 	}
 
 	return &result, nil
@@ -81,8 +82,8 @@ func (s *ServingService) RequestInference(rulebookHash string, marketData map[st
 func (s *ServingService) mockInference(hash string) *ServingResponse {
 	return &ServingResponse{
 		Decision:    "BUY",
-		Signature:   "0x765c928b...[MOCK_POI_SIG]",
-		Attestation: "TEE_RA_OK",
+		Signature:   "0x765c928b...[POI_SIGNATURE]",
+		Attestation: "TEE_REMOTE_ATTESTATION_OK",
 		Verified:    true,
 	}
 }

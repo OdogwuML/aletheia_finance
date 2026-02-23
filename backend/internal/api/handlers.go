@@ -3,12 +3,14 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"time"
 
 	"github.com/aletheia-finance/core/backend/internal/models"
 	"github.com/aletheia-finance/core/backend/internal/og"
 	"github.com/aletheia-finance/core/backend/internal/services"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -20,9 +22,10 @@ type Handler struct {
 	Supabase *services.SupabaseService
 	Watcher  *services.WatcherService
 	Serving  *services.ServingService
+	Vault    *services.VaultService
 }
 
-func NewHandler(ogClient *og.OGClient, creditService *services.CreditService, compilerService *services.CompilerService, supabaseService *services.SupabaseService, watcherService *services.WatcherService, servingService *services.ServingService) *Handler {
+func NewHandler(ogClient *og.OGClient, creditService *services.CreditService, compilerService *services.CompilerService, supabaseService *services.SupabaseService, watcherService *services.WatcherService, servingService *services.ServingService, vaultService *services.VaultService) *Handler {
 	return &Handler{
 		OG:       ogClient,
 		Credit:   creditService,
@@ -30,6 +33,7 @@ func NewHandler(ogClient *og.OGClient, creditService *services.CreditService, co
 		Supabase: supabaseService,
 		Watcher:  watcherService,
 		Serving:  servingService,
+		Vault:    vaultService,
 	}
 }
 
@@ -207,16 +211,39 @@ func (h *Handler) ExecuteSimulatedTrade(c *gin.Context) {
 		return
 	}
 
-	// 5. Simulate On-Chain Settlement with the Proof
-	// This hash would normally be sent to AletheiaVault.sol
+	// 5. Settlement (Real or Simulated)
 	settlementTx := uuid.New().String()
+	vaultAction := "Simulated: Funds moved via PoI verification"
+
+	if h.Vault != nil {
+		// Attempt Real On-Chain Settlement
+		// For the demo, we use placeholder addresses for assets
+		userAddr := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+		tokenIn := common.HexToAddress("0x0000000000000000000000000000000000000000")  // ETH
+		tokenOut := common.HexToAddress("0x6B175474E89094C44Da98b954EedeAC495271d0F") // DAI
+		amount := big.NewInt(1e17)                                                    // 0.1 ETH
+		minOut := big.NewInt(0)
+		deadline := big.NewInt(time.Now().Add(1 * time.Hour).Unix())
+
+		// Decode signature from PoI response (assuming hex for this example)
+		sigBytes := common.FromHex(decision.Signature)
+
+		txHash, err := h.Vault.ExecuteTrade(userAddr, tokenIn, tokenOut, amount, minOut, deadline, sigBytes)
+		if err == nil {
+			settlementTx = txHash
+			vaultAction = "Real On-Chain Settlement Successful via AletheiaVault.sol"
+		} else {
+			fmt.Printf("On-chain settlement failed: %v\n", err)
+			vaultAction = "On-Chain Failed, showing simulation only. Error: " + err.Error()
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"strategy_id":  strategyID,
 		"decision":     decision.Decision,
 		"signature":    decision.Signature, // The PoI
 		"attestation":  decision.Attestation,
-		"vault_action": "Funds moved via PoI verification",
+		"vault_action": vaultAction,
 		"tx_receipt":   settlementTx,
 	})
 }
