@@ -20,7 +20,7 @@
 - [x] 0G Inference for proof-of-adherence generation.
 - [x] Smart Contract Vault implementation (limited `executeTrade` permission).
 - [ ] Go Backend (Gin/REST) integration for 0G Storage Go SDK.
-- [ ] React/Next.js UI with Wagmi/RainbowKit for retail wallet interaction.
+- [x] React/Next.js UI with Wagmi/RainbowKit for retail wallet interaction (Landing Page Implemented).
 
 ## Delivery Platform Analysis (Web vs. Native App)
 

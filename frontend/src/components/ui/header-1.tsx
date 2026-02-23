@@ -2,11 +2,24 @@
 import React from 'react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { MenuToggleIcon } from '@/components/ui/menu-toggle-icon';
 import { useScroll } from '@/components/ui/use-scroll';
 import { createPortal } from 'react-dom';
+import { useAccount } from 'wagmi';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export function Header() {
+    const { isConnected } = useAccount();
+    const router = useRouter();
+
+    React.useEffect(() => {
+        // We could implement automatic redirect here if needed, 
+        // but for now we'll let the user click 'Enter Dashboard' 
+        // in the Hero or use the 'Dashboard' link in the Header.
+    }, [isConnected]);
+
     const [open, setOpen] = React.useState(false);
     const scrolled = useScroll(10);
 
@@ -51,8 +64,47 @@ export function Header() {
                             {link.label}
                         </a>
                     ))}
-                    <Button variant="outline">Sign In</Button>
-                    <Button>Get Started</Button>
+                    <ConnectButton.Custom>
+                        {({
+                            account,
+                            chain,
+                            openAccountModal,
+                            openChainModal,
+                            openConnectModal,
+                            authenticationStatus,
+                            mounted,
+                        }) => {
+                            const ready = mounted && authenticationStatus !== 'loading';
+                            const connected = ready && account && chain && (!authenticationStatus || authenticationStatus === 'authenticated');
+
+                            if (!ready || !connected) {
+                                return (
+                                    <>
+                                        <Button variant="outline" onClick={openConnectModal}>Connect Wallet</Button>
+                                    </>
+                                );
+                            }
+
+                            if (chain.unsupported) {
+                                return (
+                                    <Button variant="destructive" onClick={openChainModal}>
+                                        Wrong Network
+                                    </Button>
+                                );
+                            }
+
+                            return (
+                                <div className="flex gap-2">
+                                    <Button variant="outline" asChild>
+                                        <Link href="/dashboard">Dashboard</Link>
+                                    </Button>
+                                    <Button variant="outline" onClick={openAccountModal}>
+                                        {account.displayName}
+                                    </Button>
+                                </div>
+                            );
+                        }}
+                    </ConnectButton.Custom>
                 </div>
                 <Button
                     size="icon"
@@ -82,10 +134,44 @@ export function Header() {
                     ))}
                 </div>
                 <div className="flex flex-col gap-2">
-                    <Button variant="outline" className="w-full bg-transparent">
-                        Sign In
-                    </Button>
-                    <Button className="w-full">Get Started</Button>
+                    <ConnectButton.Custom>
+                        {({
+                            account,
+                            chain,
+                            openAccountModal,
+                            openChainModal,
+                            openConnectModal,
+                            authenticationStatus,
+                            mounted,
+                        }) => {
+                            const ready = mounted && authenticationStatus !== 'loading';
+                            const connected = ready && account && chain && (!authenticationStatus || authenticationStatus === 'authenticated');
+
+                            if (!ready || !connected) {
+                                return (
+                                    <>
+                                        <Button variant="outline" onClick={openConnectModal} className="w-full bg-transparent">
+                                            Connect Wallet
+                                        </Button>
+                                    </>
+                                );
+                            }
+
+                            if (chain.unsupported) {
+                                return (
+                                    <Button variant="destructive" onClick={openChainModal} className="w-full">
+                                        Wrong Network
+                                    </Button>
+                                );
+                            }
+
+                            return (
+                                <Button variant="outline" onClick={openAccountModal} className="w-full">
+                                    {account.displayName}
+                                </Button>
+                            );
+                        }}
+                    </ConnectButton.Custom>
                 </div>
             </MobileMenu>
         </header>

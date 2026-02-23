@@ -58,3 +58,9 @@
 - Layer 3 (Tools) must handle the 0G Handshake via Go or Python engines.
 - **Go Backend:** Acts as the deterministic middleware between UI and 0G/Blockchain.
 - **React UI:** Non-custodial interface; keys stay in the user's browser (Wagmi/RainbowKit).
+
+## Milestone Status
+- [x] **Phase 1: Landing Page** - COMPLETED
+    - Modern cinematic hero with 3D wave.
+    - Minimalist, instruction-based "How It Works" grid.
+    - Fully responsive and integrated with 0G branding.

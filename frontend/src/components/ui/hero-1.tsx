@@ -1,9 +1,24 @@
+'use client';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { RocketIcon, ArrowRightIcon, PhoneCallIcon } from "lucide-react";
 import { LogoCloud } from "@/components/ui/logo-cloud-3";
+import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Link from "next/link";
 
 export function HeroSection() {
+    const { isConnected } = useAccount();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (isConnected) {
+            router.push("/strategy-lab");
+        }
+    }, [isConnected, router]);
+
     return (
         <section className="mx-auto w-full max-w-5xl">
             {/* Top Shades */}
@@ -67,15 +82,38 @@ export function HeroSection() {
                 </p>
 
                 <div className="fade-in slide-in-from-bottom-10 flex animate-in flex-row flex-wrap items-center justify-center gap-3 fill-mode-backwards pt-2 delay-300 duration-500 ease-out">
-                    {/* <Button className="rounded-full" size="lg" variant="secondary">
-                        <PhoneCallIcon data-icon="inline-start" className="size-4 mr-2" />{" "}
-                        Book a Call
-                    </Button> */}
-                    <Button className="rounded-full " size="lg">
-                        Get started{" "}
-                        <ArrowRightIcon
-                            className="size-4 ms-2" data-icon="inline-end" />
-                    </Button>
+                    <ConnectButton.Custom>
+                        {({
+                            account,
+                            chain,
+                            openConnectModal,
+                            authenticationStatus,
+                            mounted,
+                        }) => {
+                            const ready = mounted && authenticationStatus !== 'loading';
+                            const connected = ready && account && chain && (!authenticationStatus || authenticationStatus === 'authenticated');
+
+                            if (!ready || !connected) {
+                                return (
+                                    <Button className="rounded-full" size="lg" onClick={openConnectModal}>
+                                        Connect Wallet{" "}
+                                        <ArrowRightIcon
+                                            className="size-4 ms-2" data-icon="inline-end" />
+                                    </Button>
+                                );
+                            }
+
+                            return (
+                                <Button className="rounded-full" size="lg" asChild>
+                                    <Link href="/strategy-lab">
+                                        Enter Workspace{" "}
+                                        <ArrowRightIcon
+                                            className="size-4 ms-2" data-icon="inline-end" />
+                                    </Link>
+                                </Button>
+                            );
+                        }}
+                    </ConnectButton.Custom>
                 </div>
             </div>
         </section>

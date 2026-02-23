@@ -15,10 +15,22 @@ type StrategyRulebook struct {
 	OwnerAddress      string         `json:"owner_address"`
 	LogicNLP          string         `json:"logic_nlp"`
 	RuleEngineVersion string         `json:"rule_engine_version"`
-	CompiledLogic     string         `json:"compiled_logic"` // JSON/Encrypted
+	CompiledLogic     CompiledLogic  `json:"compiled_logic"`
 	DeploymentTx      string         `json:"deployment_tx"`
 	Status            StrategyStatus `json:"status"`
 	CreatedAt         time.Time      `json:"created_at"`
+}
+
+type CompiledLogic struct {
+	Action     string      `json:"action"` // BUY, SELL, REBALANCE
+	Asset      string      `json:"asset"`
+	Conditions []Condition `json:"conditions"`
+}
+
+type Condition struct {
+	Indicator string `json:"indicator"` // PRICE, RSI, TIME
+	Operator  string `json:"operator"`  // <, >, ==
+	Value     string `json:"value"`
 }
 
 type CreateStrategyRequest struct {

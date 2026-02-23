@@ -4,10 +4,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/aletheia-finance/core/internal/api"
-	"github.com/aletheia-finance/core/internal/og"
-	"github.com/aletheia-finance/core/internal/services"
+	"github.com/aletheia-finance/core/backend/internal/api"
+	"github.com/aletheia-finance/core/backend/internal/og"
+	"github.com/aletheia-finance/core/backend/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -29,12 +30,24 @@ func main() {
 	defer ogClient.Close()
 
 	// Service Initialization
-	creditService := services.NewCreditService()
+	supabaseService := services.NewSupabaseService()
+	creditService := services.NewCreditService(supabaseService)
+	compilerService := services.NewCompilerService()
 
 	// Handler Initialization
-	h := api.NewHandler(ogClient, creditService)
+	h := api.NewHandler(ogClient, creditService, compilerService, supabaseService)
 
 	r := gin.Default()
+
+	// CORS Configuration
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// API Routes
 	v1 := r.Group("/api/v1")

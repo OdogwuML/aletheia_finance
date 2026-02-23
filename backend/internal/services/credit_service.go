@@ -1,12 +1,9 @@
 package services
 
 import (
+	"encoding/json"
 	"errors"
-	"sync"
 	"time"
-
-	"github.com/aletheia-finance/core/internal/models"
-	"github.com/google/uuid"
 )
 
 var (
@@ -15,92 +12,81 @@ var (
 )
 
 type CreditService struct {
-	mu       sync.RWMutex
-	accounts map[string]*models.CreditAccount
-	history  []models.CreditTransaction
+	supabase *SupabaseService
 }
 
-func NewCreditService() *CreditService {
+func NewCreditService(supabase *SupabaseService) *CreditService {
 	return &CreditService{
-		accounts: make(map[string]*models.CreditAccount),
-		history:  make([]models.CreditTransaction, 0),
+		supabase: supabase,
 	}
 }
 
 // ProvisionAccount gives a new user initial credits (e.g., 500)
 func (s *CreditService) ProvisionAccount(address string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// 1. Check if user exists
+	data, err := s.supabase.get("users", address)
+	if err != nil {
+		return
+	}
 
-	if _, exists := s.accounts[address]; !exists {
-		s.accounts[address] = &models.CreditAccount{
-			OwnerAddress: address,
-			Balance:      500, // Starting balance
-			UpdatedAt:    time.Now(),
-		}
+	var users []map[string]interface{}
+	json.Unmarshal(data, &users)
+
+	if len(users) == 0 {
+		// Create user
+		s.supabase.post("users", map[string]interface{}{
+			"wallet_address": address,
+			"credits":        500,
+		})
 	}
 }
 
 func (s *CreditService) GetBalance(address string) (int64, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	data, err := s.supabase.get("users", address)
+	if err != nil {
+		return 0, err
+	}
 
-	acc, exists := s.accounts[address]
-	if !exists {
+	var users []map[string]interface{}
+	json.Unmarshal(data, &users)
+
+	if len(users) == 0 {
 		return 0, ErrAccountNotFound
 	}
-	return acc.Balance, nil
+
+	return int64(users[0]["credits"].(float64)), nil
 }
 
 func (s *CreditService) Deduct(address string, amount int64, purpose string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	acc, exists := s.accounts[address]
-	if !exists {
-		return ErrAccountNotFound
+	balance, err := s.GetBalance(address)
+	if err != nil {
+		return err
 	}
 
-	if acc.Balance < amount {
+	if balance < amount {
 		return ErrInsufficientBalance
 	}
 
-	acc.Balance -= amount
-	acc.UpdatedAt = time.Now()
-
-	// Record transaction
-	s.history = append(s.history, models.CreditTransaction{
-		TxID:         uuid.New().String(),
-		OwnerAddress: address,
-		Amount:       amount,
-		Type:         models.TxDeduction,
-		Purpose:      purpose,
-		Timestamp:    time.Now(),
+	newBalance := balance - amount
+	_, err = s.supabase.patch("users", address, map[string]interface{}{
+		"credits":    newBalance,
+		"updated_at": time.Now(),
 	})
 
-	return nil
+	return err
 }
 
 func (s *CreditService) Refund(address string, amount int64, purpose string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	acc, exists := s.accounts[address]
-	if !exists {
-		return ErrAccountNotFound
+	balance, err := s.GetBalance(address)
+	if err != nil {
+		return err
 	}
 
-	acc.Balance += amount
-	acc.UpdatedAt = time.Now()
-
-	s.history = append(s.history, models.CreditTransaction{
-		TxID:         uuid.New().String(),
-		OwnerAddress: address,
-		Amount:       amount,
-		Type:         models.TxRefund,
-		Purpose:      purpose,
-		Timestamp:    time.Now(),
+	newBalance := balance + amount
+	_, err = s.supabase.patch("users", address, map[string]interface{}{
+		"credits":    newBalance,
+		"updated_at": time.Now(),
 	})
 
-	return nil
+	return err
 }
