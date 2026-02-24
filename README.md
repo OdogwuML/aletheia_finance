@@ -52,16 +52,15 @@ Whether you're a crypto veteran or just getting started, this guide walks you th
 
 ---
 
-### Step 2 — Fund Your Vault
+### Step 2 — Make Sure Your Wallet Has Funds
 
-Before the AI can trade on your behalf, you need to deposit ETH into your personal `AletheiaVault` — a smart contract deployed on the **0G Galileo Testnet**.
+Aletheia uses your **connected wallet** to interact with the 0G Galileo Testnet. Before you can create strategies or trade, make sure your wallet has testnet ETH.
 
-1. From the **Dashboard**, locate the **"My Vault"** panel.
-2. Enter the amount of ETH you'd like to deposit (e.g. `0.05 ETH`).
-3. Click **"Deposit"** and approve the transaction in your wallet.
-4. Your vault balance will update once the transaction is confirmed on-chain.
+1. Visit the [0G Faucet](https://hub.0g.ai/faucet) and paste your wallet address to receive free testnet ETH.
+2. Open your wallet (MetaMask, Rabby, etc.) and confirm the tokens have arrived.
+3. That's it — your connected wallet is all you need. There's no separate deposit step.
 
-> ⚠️ **Testnet funds only.** Aletheia currently runs on the 0G Galileo Testnet. You'll need testnet ETH — get some from the [0G Faucet](https://hub.0g.ai/faucet).
+> ⚠️ **Testnet funds only.** Aletheia currently runs on the 0G Galileo Testnet. All transactions use free testnet ETH — no real money required.
 
 ---
 
@@ -127,14 +126,13 @@ After a trade executes, Aletheia shows you the full cryptographic receipt — so
 
 ---
 
-### Step 6 — Withdraw Your Funds
+### Step 6 — Your Funds, Your Control
 
-You are always free to withdraw your funds from the vault, with no lock-up periods or fees.
+Your funds remain in your **connected wallet** at all times. Aletheia is non-custodial — the platform never holds your tokens.
 
-1. On the **Dashboard**, open the **"My Vault"** panel.
-2. Enter the amount you'd like to withdraw.
-3. Click **"Withdraw"** and approve the transaction in your wallet.
-4. Your ETH is returned directly to your wallet — the smart contract sends it with no intermediary.
+- You can disconnect your wallet anytime.
+- No lock-up periods, no withdrawal process — your tokens are always yours.
+- The smart contract only ever moves funds when a trade is cryptographically verified via PoI.
 
 ---
 
