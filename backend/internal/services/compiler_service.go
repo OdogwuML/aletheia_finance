@@ -102,8 +102,14 @@ func (s *CompilerService) Compile(nlp string) (models.CompiledLogic, error) {
 		}
 	}
 
+	// If no specific technical conditions were parsed, accept as a fundamental/NLP-driven rule.
+	// This allows strategies like "Buy ETH when on-chain active addresses grow..." to pass through.
 	if len(logic.Conditions) == 0 {
-		return logic, errors.New("compiler could not extract valid execution conditions")
+		logic.Conditions = append(logic.Conditions, models.Condition{
+			Indicator: "NLP_RULE",
+			Operator:  "MATCH",
+			Value:     nlp,
+		})
 	}
 
 	return logic, nil
