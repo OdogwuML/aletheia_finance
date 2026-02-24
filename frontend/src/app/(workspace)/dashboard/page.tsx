@@ -213,7 +213,7 @@ export default function DashboardPage() {
                                             disabled={executingId === strat.strategy_id}
                                         >
                                             {executingId === strat.strategy_id ? <Loader2 className="size-3 animate-spin mr-2" /> : <Play className="size-3 mr-2" />}
-                                            Simulate
+                                            Run Agent
                                         </Button>
                                         <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase ${strat.status === 'active' ? 'bg-green-500/10 text-green-500' : 'bg-white/5 text-white/40'}`}>
                                             <span className={`size-1.5 rounded-full ${strat.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-white/20'}`} />

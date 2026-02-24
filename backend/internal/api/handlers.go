@@ -143,7 +143,7 @@ func (h *Handler) GetUserStats(c *gin.Context) {
 		return
 	}
 
-	data, err := h.Supabase.Get("strategies", address)
+	data, err := h.Supabase.GetByColumn("strategies", "owner_address", address)
 	var count int
 	if err == nil {
 		var strats []interface{}
@@ -164,7 +164,7 @@ func (h *Handler) GetUserStrategies(c *gin.Context) {
 		return
 	}
 
-	data, err := h.Supabase.Get("strategies", address)
+	data, err := h.Supabase.GetByColumn("strategies", "owner_address", address)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch strategies"})
 		return

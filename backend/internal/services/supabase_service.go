@@ -49,7 +49,11 @@ func (s *SupabaseService) Post(table string, body interface{}) ([]byte, error) {
 }
 
 func (s *SupabaseService) Get(table string, walletAddress string) ([]byte, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/v1/%s?wallet_address=eq.%s", s.URL, table, walletAddress), nil)
+	return s.GetByColumn(table, "wallet_address", walletAddress)
+}
+
+func (s *SupabaseService) GetByColumn(table string, column string, value string) ([]byte, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/v1/%s?%s=eq.%s", s.URL, table, column, value), nil)
 	if err != nil {
 		return nil, err
 	}
