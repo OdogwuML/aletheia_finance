@@ -1,10 +1,10 @@
 # ---- Build Stage ----
-FROM golang:latest AS builder
+FROM golang:alpine AS builder
 
-# Install build dependencies (needed for CGO-based libs in go-ethereum)
+# Install build dependencies (apk works perfectly here now)
 RUN apk add --no-cache gcc musl-dev git
 
-# Allow Go to auto-download the required toolchain if go.mod needs a newer version
+# Allow Go to auto-download the required toolchain
 ENV GOTOOLCHAIN=auto
 
 WORKDIR /app
@@ -18,7 +18,7 @@ RUN go mod download
 # Copy the entire source
 COPY . .
 
-# Build the binary from the correct entry point
+# Build the binary
 RUN CGO_ENABLED=1 GOOS=linux go build -o /api-server ./backend/cmd/api
 
 # ---- Run Stage ----

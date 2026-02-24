@@ -36,9 +36,14 @@ func main() {
 	compilerService := services.NewCompilerService()
 	watcherService := services.NewWatcherService()
 	servingService := services.NewServingService(os.Getenv("OG_SERVING_ENDPOINT"), os.Getenv("OG_SERVING_KEY"))
+	vaultService, err := services.NewVaultService(evmRpc, privateKey, os.Getenv("VAULT_ADDRESS"))
+	if err != nil {
+		log.Printf("Warning: VaultService unavailable (on-chain settlement disabled): %v", err)
+		vaultService = nil
+	}
 
 	// Handler Initialization
-	h := api.NewHandler(ogClient, creditService, compilerService, supabaseService, watcherService, servingService)
+	h := api.NewHandler(ogClient, creditService, compilerService, supabaseService, watcherService, servingService, vaultService)
 
 	r := gin.Default()
 
