@@ -1,8 +1,11 @@
 # ---- Build Stage ----
-FROM golang:1.25-alpine AS builder
+FROM golang:latest AS builder
 
 # Install build dependencies (needed for CGO-based libs in go-ethereum)
 RUN apk add --no-cache gcc musl-dev git
+
+# Allow Go to auto-download the required toolchain if go.mod needs a newer version
+ENV GOTOOLCHAIN=auto
 
 WORKDIR /app
 
