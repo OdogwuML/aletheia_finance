@@ -33,6 +33,124 @@ Every trade Aletheia executes carries a **Proof-of-Inference (PoI)** — a crypt
 
 ---
 
+## 🚦 How to Use Aletheia — Step by Step
+
+Whether you're a crypto veteran or just getting started, this guide walks you through the entire experience from zero to your first AI-executed trade.
+
+---
+
+### Step 1 — Connect Your Wallet
+
+> **Who this is for:** Anyone with an Ethereum-compatible wallet (MetaMask, Rabby, etc.).
+
+1. Open the app at [http://localhost:3000](http://localhost:3000) (or the live deployment URL).
+2. Click **"Connect Wallet"** in the top-right corner of the dashboard.
+3. Your browser wallet will prompt you to approve the connection — click **Confirm**.
+4. Once connected, your wallet address will appear in the header. Aletheia is **non-custodial** — the app never holds your private key.
+
+> 💡 **You are always in control.** The app can only execute trades that you explicitly authorise through a signed strategy. You can withdraw your funds at any time, no questions asked.
+
+---
+
+### Step 2 — Fund Your Vault
+
+Before the AI can trade on your behalf, you need to deposit ETH into your personal `AletheiaVault` — a smart contract deployed on the **0G Galileo Testnet**.
+
+1. From the **Dashboard**, locate the **"My Vault"** panel.
+2. Enter the amount of ETH you'd like to deposit (e.g. `0.05 ETH`).
+3. Click **"Deposit"** and approve the transaction in your wallet.
+4. Your vault balance will update once the transaction is confirmed on-chain.
+
+> ⚠️ **Testnet funds only.** Aletheia currently runs on the 0G Galileo Testnet. You'll need testnet ETH — get some from the [0G Faucet](https://hub.0g.ai/faucet).
+
+---
+
+### Step 3 — Create a Trading Strategy
+
+This is where Aletheia's magic begins. You don't need to write code — just describe your strategy in **plain English**.
+
+1. Navigate to the **"Strategy Lab"** from the sidebar.
+2. In the text box, type your strategy as a natural language instruction. Examples:
+
+   ```
+   Buy ETH when on-chain active addresses grow by more than 10% in a week
+   and exchange outflows are rising, indicating accumulation.
+   ```
+
+   ```
+   Sell ETH if the price drops more than 15% in 24 hours and social
+   sentiment turns negative, suggesting panic selling.
+   ```
+
+3. Click **"Compile Strategy"**.
+
+**What happens behind the scenes:**
+- The **NLP Compiler** parses your English instruction and converts it into a structured rule set.
+- The AI then layers in **fundamental analysis** — evaluating on-chain metrics, tokenomics, macro context, and market sentiment to enrich your rulebook.
+- The completed rulebook is **uploaded to 0G decentralised storage**, and you receive a unique **root hash** — a permanent, tamper-proof fingerprint of your strategy.
+
+> 📦 Your strategy rulebook is stored on the decentralised 0G Network. Nobody — not even the Aletheia team — can modify it after it's saved.
+
+---
+
+### Step 4 — Simulate & Activate the AI Agent
+
+With your strategy compiled and stored, you can now activate the AI trading agent.
+
+1. Go back to the **Dashboard** and find your strategy in the **"My Strategies"** panel.
+2. Click **"Simulate"** next to the strategy you want to run.
+
+**What happens:**
+| Step | What the System Does |
+| :--- | :--- |
+| 📡 **Fetch Market Data** | The Watcher pulls the live ETH price from CoinGecko and evaluates current market conditions |
+| 🔍 **Run Fundamental Analysis** | The AI assesses on-chain metrics, macro signals, and sentiment against your rulebook |
+| 🧠 **AI Inference (TEE)** | The decision is computed inside a **Trusted Execution Environment** on the 0G Serving network — meaning even the server operator can't tamper with the result |
+| 🔐 **Generate Proof-of-Inference** | The 0G Serving node cryptographically signs the AI's decision, producing a **PoI signature** |
+| ⛓️ **On-Chain Settlement** | The backend calls `executeTrade()` on `AletheiaVault.sol`, submitting the decision + PoI signature to the blockchain |
+| ✅ **Trade Confirmed** | The smart contract verifies the signature and, if valid, executes the trade — emitting a `TradeExecuted` event |
+
+---
+
+### Step 5 — Read the Trade Proof
+
+After a trade executes, Aletheia shows you the full cryptographic receipt — so you can verify the AI's work yourself.
+
+1. A **"Trade Proof"** modal will appear on the Dashboard automatically after execution.
+2. The modal displays:
+   - **Trade decision** — Buy / Sell / Hold, and the reasoning
+   - **PoI Signature** — the raw cryptographic signature from the 0G Serving node
+   - **Transaction hash** — click to view the `TradeExecuted` event live on the [0G Galileo block explorer](https://chainscan-galileo.0g.ai)
+   - **Rulebook hash** — verify the strategy that was used on 0G Storage
+
+> 🔎 **Anyone can verify this.** Paste the transaction hash into the block explorer and you'll see the exact parameters of the trade, the PoI payload, and the on-chain confirmation — no trust required.
+
+---
+
+### Step 6 — Withdraw Your Funds
+
+You are always free to withdraw your funds from the vault, with no lock-up periods or fees.
+
+1. On the **Dashboard**, open the **"My Vault"** panel.
+2. Enter the amount you'd like to withdraw.
+3. Click **"Withdraw"** and approve the transaction in your wallet.
+4. Your ETH is returned directly to your wallet — the smart contract sends it with no intermediary.
+
+---
+
+### Quick Reference — Key Concepts
+
+| Term | What It Means |
+| :--- | :--- |
+| **AletheiaVault** | Your personal smart contract that holds your funds. Only you (and AI-verified trades) can move money out of it. |
+| **Proof-of-Inference (PoI)** | A cryptographic signature proving that a 0G AI node (inside a secure TEE) made the trade decision. |
+| **Fundamental Analysis** | The AI's deep research layer — evaluating on-chain data, tokenomics, macro trends, and sentiment before deciding. |
+| **Strategy Rulebook** | The compiled version of your plain-English strategy, stored permanently on 0G decentralised storage. |
+| **TEE (Trusted Execution Env.)** | A secure hardware enclave that runs the AI inference in isolation — no one, not even the node operator, can see or tamper with it. |
+| **0G Galileo Testnet** | The test blockchain where Aletheia is currently deployed. Use testnet ETH to try everything for free. |
+
+---
+
 ## 🔍 Fundamental Analysis Engine
 
 Most AI trading bots are purely technical — they react to price and volume. Aletheia's agents go deeper.

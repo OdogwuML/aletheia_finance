@@ -44,24 +44,25 @@ func (h *Handler) CreateStrategy(c *gin.Context) {
 		return
 	}
 
-	// 1. Credit Check & Deduction (Atomic-ish)
-	// We'll provision a sample account if one doesn't exist for test purposes
+	// 1. Credit Check & Deduction — DISABLED FOR DEMO
+	// Provision account so user exists in DB, but skip credit deduction
 	h.Credit.ProvisionAccount(req.OwnerAddress)
+	const cost = 0 // Demo mode: no credits charged
 
-	const cost = 50
-	err := h.Credit.Deduct(req.OwnerAddress, cost, "Strategy Creation: "+req.LogicNLP)
-	if err != nil {
-		c.JSON(http.StatusPaymentRequired, gin.H{
-			"error":   "Insufficient Credits",
-			"details": err.Error(),
-		})
-		return
-	}
+	// const cost = 50
+	// err := h.Credit.Deduct(req.OwnerAddress, cost, "Strategy Creation: "+req.LogicNLP)
+	// if err != nil {
+	// 	c.JSON(http.StatusPaymentRequired, gin.H{
+	// 		"error":   "Insufficient Credits",
+	// 		"details": err.Error(),
+	// 	})
+	// 	return
+	// }
 
 	// 2. Compile NLP to Structured Logic
 	compiled, err := h.Compiler.Compile(req.LogicNLP)
 	if err != nil {
-		h.Credit.Refund(req.OwnerAddress, cost, "Rollback: Compilation Failure")
+		// h.Credit.Refund(req.OwnerAddress, cost, "Rollback: Compilation Failure") // DISABLED FOR DEMO
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Strategy Compilation Failed",
 			"details": err.Error(),
@@ -83,7 +84,7 @@ func (h *Handler) CreateStrategy(c *gin.Context) {
 	// 3. Serialize for 0G Storage
 	data, err := json.Marshal(rulebook)
 	if err != nil {
-		h.Credit.Refund(req.OwnerAddress, cost, "Rollback: Serialization Failure")
+		// h.Credit.Refund(req.OwnerAddress, cost, "Rollback: Serialization Failure") // DISABLED FOR DEMO
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to serialize rulebook"})
 		return
 	}
