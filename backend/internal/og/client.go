@@ -58,8 +58,8 @@ func (c *OGClient) UploadRulebook(ctx context.Context, data []byte) (string, err
 	// SplitableUpload uses the indexer to discover storage nodes automatically,
 	// then submits the on-chain transaction and transfers segments to nodes.
 	txHashes, _, err := c.IndexerClient.SplitableUpload(ctx, c.Web3Client, fileData, 256*1024, transfer.UploadOption{
-		ExpectedReplica: 1,
-		NRetries:        3,
+		ExpectedReplica: 0,
+		NRetries:        5,
 	})
 	if err != nil {
 		return "", fmt.Errorf("0G upload failed: %v", err)

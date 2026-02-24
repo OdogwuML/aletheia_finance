@@ -90,13 +90,15 @@ func (h *Handler) CreateStrategy(c *gin.Context) {
 	}
 
 	// 4. Upload to 0G Storage (best-effort — falls back gracefully on testnet)
+	fmt.Printf("Attempting 0G Storage upload (%d bytes)...\n", len(data))
 	txHash, err := h.OG.UploadRulebook(c.Request.Context(), data)
 	if err != nil {
 		// Log the real error but don't fail the entire request.
-		// On testnet, the agent wallet may lack 0G tokens for storage fees.
 		fmt.Printf("Warning: 0G Storage upload failed (using content hash fallback): %v\n", err)
 		// Derive a deterministic mock tx hash from the rulebook ID so it's unique but reproducible
 		txHash = "0xDEMO_" + rulebook.StrategyID[:8]
+	} else {
+		fmt.Printf("0G Storage upload succeeded! TX: %s\n", txHash)
 	}
 
 	rulebook.DeploymentTx = txHash
