@@ -1,0 +1,31 @@
+# Go build artifacts
+*.exe
+*.test
+*.out
+
+# Local env — NEVER ship secrets
+.env
+.env.*
+
+# Frontend (separate deployment on Vercel)
+frontend/
+frontend/node_modules/
+frontend/.next/
+
+# Blockchain dev tooling
+blockchain/
+blockchain/node_modules/
+blockchain/artifacts/
+blockchain/cache/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Docs
+*.md
+README.md

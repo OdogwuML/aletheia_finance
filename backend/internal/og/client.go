@@ -9,30 +9,32 @@ import (
 	"github.com/0gfoundation/0g-storage-client/core"
 	"github.com/0gfoundation/0g-storage-client/indexer"
 	"github.com/0gfoundation/0g-storage-client/transfer"
+	web3go "github.com/openweb3/web3go"
 )
 
+// OGClient wraps the 0G Storage SDK clients needed for upload operations.
 type OGClient struct {
-	Web3Client    *blockchain.Web3
+	Web3Client    *web3go.Client
 	IndexerClient *indexer.Client
 }
 
-func NewOGClient(evmRpc, indRpc, privateKey string) (*OGClient, error) {
-	// 1. Create Web3 client for blockchain interactions
+// NewOGClient initializes the 0G Storage client using the indexer endpoint.
+// The indexer discovers available storage nodes automatically — no need to hardcode node URLs.
+func NewOGClient(evmRpc, indexerEndpoint, privateKey string) (*OGClient, error) {
+	// 1. Web3 client signs/pays on-chain storage submission transactions
 	w3client, err := blockchain.NewWeb3(evmRpc, privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Web3 client: %v", err)
 	}
 
-	// 2. Create indexer client for node management
-	indexerClient, err := indexer.NewClient(indRpc)
+	// 2. Indexer client discovers available storage nodes on the testnet
+	indexerClient, err := indexer.NewClient(indexerEndpoint, indexer.IndexerClientOption{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize indexer client: %v", err)
+		log.Printf("Warning: 0G indexer unavailable (%v). Uploads will use fallback hashes.", err)
+		return &OGClient{Web3Client: w3client, IndexerClient: nil}, nil
 	}
 
-	// 3. Initialize Transfer Flow for data uploads
-	// Note: We'll refine the flow initialization as we implement strategy uploads
-
-	log.Printf("0G Client Initialized - Connected to Indexer: %s", indRpc)
+	log.Printf("0G Client Initialized — Indexer: %s", indexerEndpoint)
 
 	return &OGClient{
 		Web3Client:    w3client,
@@ -40,28 +42,36 @@ func NewOGClient(evmRpc, indRpc, privateKey string) (*OGClient, error) {
 	}, nil
 }
 
-// UploadRulebook takes a strategy rulebook (serialized as bytes) and uploads it to 0G Storage.
+// UploadRulebook serializes a strategy rulebook and uploads it to 0G Storage.
+// Uses the indexer to automatically discover storage nodes (correct flow).
 func (c *OGClient) UploadRulebook(ctx context.Context, data []byte) (string, error) {
-	// 1. Create Data from bytes
-	fileData := core.NewDataInMemory(data)
-
-	// 2. Initialize Transfer Flow
-	flow, err := transfer.NewFlow(c.Web3Client, c.IndexerClient)
-	if err != nil {
-		return "", fmt.Errorf("failed to create transfer flow: %v", err)
+	if c.IndexerClient == nil {
+		return "", fmt.Errorf("indexer client not available")
 	}
 
-	// 3. Upload the data
-	txHash, _, err := flow.Upload(ctx, fileData)
+	// Create in-memory data object (NewDataInMemory returns (data, error) in v1.2.2)
+	fileData, err := core.NewDataInMemory(data)
 	if err != nil {
-		return "", fmt.Errorf("failed to upload data to 0G: %v", err)
+		return "", fmt.Errorf("failed to create in-memory data: %v", err)
 	}
 
-	return txHash.Hex(), nil
+	// SplitableUpload uses the indexer to discover storage nodes automatically,
+	// then submits the on-chain transaction and transfers segments to nodes.
+	txHashes, _, err := c.IndexerClient.SplitableUpload(ctx, c.Web3Client, fileData, 256*1024, transfer.UploadOption{
+		ExpectedReplica: 1,
+		NRetries:        3,
+	})
+	if err != nil {
+		return "", fmt.Errorf("0G upload failed: %v", err)
+	}
+
+	if len(txHashes) == 0 {
+		return "", fmt.Errorf("upload succeeded but returned no transaction hashes")
+	}
+
+	return txHashes[0].Hex(), nil
 }
 
 func (c *OGClient) Close() {
-	if c.Web3Client != nil {
-		c.Web3Client.Close()
-	}
+	// web3go.Client does not require explicit teardown
 }

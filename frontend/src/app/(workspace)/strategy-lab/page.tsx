@@ -26,21 +26,25 @@ export default function StrategyLabPage() {
     const [status, setStatus] = useState<'idle' | 'deploying' | 'success' | 'error'>('idle');
     const [deployResult, setDeployResult] = useState<{ txHash?: string; error?: string } | null>(null);
 
+    // Use connected wallet or fall back to a demo address for testing
+    const ownerAddress = address || "0xDemoUser0000000000000000000000000000000";
+
     const handleDeploy = async () => {
-        if (!strategyText || !isConnected || !address) return;
+        if (!strategyText) return;
 
         setStatus('deploying');
         setDeployResult(null);
 
         try {
-            const response = await fetch("http://localhost:8080/api/v1/strategies", {
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+            const response = await fetch(`${API_BASE}/strategies`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     logic_nlp: strategyText,
-                    owner_address: address,
+                    owner_address: ownerAddress,
                 }),
             });
 
@@ -60,16 +64,23 @@ export default function StrategyLabPage() {
     };
 
     return (
-        <div className="flex h-full relative overflow-hidden bg-black font-sans">
+        <div className="flex h-full relative bg-black font-sans overflow-y-auto">
             {/* Main Drafting Area */}
             <div className="flex-1 flex flex-col p-12 lg:p-16">
                 <div className="max-w-4xl w-full">
                     <header className="mb-12">
                         <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/20 mb-4 block">Strategy Drafting</span>
                         <h1 className="text-6xl font-semibold tracking-tight text-white/90">Articulate your Strategy</h1>
+                        {/* Wallet status indicator */}
+                        <div className="mt-4 flex items-center gap-2">
+                            <div className={`size-1.5 rounded-full ${isConnected ? 'bg-green-400' : 'bg-yellow-400'} animate-pulse`} />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">
+                                {isConnected ? `Wallet: ${address?.slice(0, 6)}...${address?.slice(-4)}` : 'Demo Mode — Connect wallet to link strategies to your account'}
+                            </span>
+                        </div>
                     </header>
 
-                    <div className="relative group">
+                    <div className="relative group rounded-2xl border border-white/10 bg-white/[0.02] p-6 focus-within:border-white/25 transition-colors duration-300">
                         {/* Textarea for NLP Input */}
                         <textarea
                             value={strategyText}
@@ -77,14 +88,11 @@ export default function StrategyLabPage() {
                             placeholder="Define your entry and exit logic in natural language... e.g., 'When the 50-day EMA crosses above the 200-day EMA, buy 5% BTC...'"
                             className="w-full h-80 bg-transparent text-2xl font-medium leading-relaxed text-white/80 placeholder:text-white/10 resize-none outline-none custom-scrollbar focus:placeholder:opacity-0 transition-all"
                         />
-
-                        {/* Decorative typing line */}
-                        <div className="absolute left-0 -bottom-4 w-12 h-px bg-white/20 group-focus-within:w-full group-focus-within:bg-white/40 transition-all duration-700" />
                     </div>
                 </div>
 
-                {/* Bottom Floating Action Bar */}
-                <div className="mt-auto pt-16 flex justify-center">
+                {/* Action Bar — directly below the textarea */}
+                <div className="mt-10 flex items-center gap-3">
                     <div className="px-6 py-2 bg-[#0A0A0A] border border-white/5 rounded-full flex items-center gap-2 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
                         <Button variant="ghost" size="icon" className="rounded-full text-white/20 hover:text-white transition-colors">
                             <Languages className="size-4" />
@@ -93,18 +101,16 @@ export default function StrategyLabPage() {
                             <Save className="size-4" />
                         </Button>
                         <div className="w-px h-4 bg-white/10 mx-2" />
-
                         <Button variant="outline" className="rounded-full border-white/10 bg-white/5 hover:bg-white/10 text-white/60 font-bold text-[10px] uppercase tracking-widest h-10 px-6">
                             <Play className="size-3 mr-2 fill-current" /> Backtest
                         </Button>
-
                         <Button
                             className={cn(
                                 "rounded-full font-bold text-[10px] uppercase tracking-widest h-10 px-8 flex items-center gap-2 transition-all",
                                 status === 'success' ? "bg-green-500 text-white" : "bg-white text-black hover:bg-white/90 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                             )}
                             onClick={handleDeploy}
-                            disabled={status === 'deploying' || !strategyText || !isConnected}
+                            disabled={status === 'deploying' || !strategyText}
                         >
                             {status === 'deploying' ? (
                                 <>Deploying... <Loader2 className="size-3 animate-spin" /></>
@@ -117,7 +123,7 @@ export default function StrategyLabPage() {
                     </div>
                 </div>
 
-                {/* Status Feedback Overlay / Toast placeholder */}
+                {/* Status Feedback */}
                 {deployResult && (
                     <div className={cn(
                         "mt-8 p-4 rounded-2xl border flex items-center justify-between animate-in slide-in-from-bottom-4 transition-all",
