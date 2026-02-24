@@ -43,7 +43,7 @@ Whether you're a crypto veteran or just getting started, this guide walks you th
 
 > **Who this is for:** Anyone with an Ethereum-compatible wallet (MetaMask, Rabby, etc.).
 
-1. Open the app at [http://localhost:3000](http://localhost:3000) (or the live deployment URL).
+1. Open the app at [link](https://aletheia-finance.vercel.app) (or the live deployment URL).
 2. Click **"Connect Wallet"** in the top-right corner of the dashboard.
 3. Your browser wallet will prompt you to approve the connection — click **Confirm**.
 4. Once connected, your wallet address will appear in the header. Aletheia is **non-custodial** — the app never holds your private key.
