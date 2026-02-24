@@ -320,7 +320,7 @@ export const FlickeringFooter = () => {
                 </div>
             </div>
             <div className="py-8 text-center text-xs text-white/20 mt-12">
-                &copy; 2024 Aletheia Finance. Built on 0G Network.
+                &copy; 2026 Aletheia Finance. Built on 0G Network.
             </div>
         </footer>
     );
